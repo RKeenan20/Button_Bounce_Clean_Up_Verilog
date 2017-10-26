@@ -14,15 +14,15 @@
 module buttonCleanup( input clk5,
                       input reset,
                       input raw,
-                      output clean );
+                      output reg clean );
 
                       reg [2:0] currentState, nextState;
                       wire enableSample, timerStart;
 
-                      localparam [2:0]  IDLE = 3'b000;
-                                        BTNPRESSED = 3'b001;
-                                        DELAY1 = 3'b010;
-                                        SAMPLETIME = 3'b011;
+                      localparam [2:0]  IDLE = 3'b000,
+                                        BTNPRESSED = 3'b001,
+                                        DELAY1 = 3'b010,
+                                        SAMPLETIME = 3'b011,
                                         BUTTONNOTPRESSED = 3'b100;
 
 
@@ -32,13 +32,13 @@ module buttonCleanup( input clk5,
                           else
                             currentState <= nextState;
 
-                      countTimer delayCounter(.clk(clk5),.rst(reset),.enable(timerStart) .enableSample(enableSample));
+                      countTimer delayCounter(.clk(clk5),.rst(reset),.enable(timerStart), .enableSample(enableSample));
 
                       //Next State Logic
-                      always @(currentState, raw, sample )
+                      always @(currentState, raw, enableSample )
                         case(currentState)
                           3'b000: if(raw)
-                                    nextState <= ButPressed;
+                                    nextState <= BTNPRESSED;
                                   else
                                     nextState <= IDLE;
                           3'b001: nextState <= DELAY1;
@@ -50,7 +50,7 @@ module buttonCleanup( input clk5,
                                     nextState <= BUTTONNOTPRESSED;
                                   else
                                     nextState <= SAMPLETIME;
-                          3'b100: if(!sample)
+                          3'b100: if(!enableSample)
                                     nextState <= SAMPLETIME;
                                   else
                                     nextState <= IDLE;
