@@ -32,31 +32,51 @@ module buttonCleanup( input clk5,
                           else
                             currentState <= nextState;
 
-                      countTimer delayCounter(.clk(clk5),.rst(reset),.enable(timerStart), .enableSample(enableSample));
-
                       //Next State Logic
                       always @(currentState, raw, enableSample )
                         case(currentState)
-                          3'b000: if(raw)
-                                    nextState <= BTNPRESSED;
-                                  else
-                                    nextState <= IDLE;
-                          3'b001: nextState <= DELAY1;
-                          3'b010: if(!sample)
-                                    nextState <= DELAY1;
-                                  else
-                                    nextState <= SAMPLETIME;
-                          3'b011: if(!raw)
-                                    nextState <= BUTTONNOTPRESSED;
-                                  else
-                                    nextState <= SAMPLETIME;
-                          3'b100: if(!enableSample)
-                                    nextState <= SAMPLETIME;
-                                  else
-                                    nextState <= IDLE;
-                          default: nextState <= IDLE; //Compensating for the other states
+                          3'b000: begin
+                                    timerStart = 1'b0;
+                                    if(raw)
+                                      nextState = BTNPRESSED;
+                                    else
+                                      nextState = IDLE;
+                                  end
+                          3'b001: begin
+                                    nextState = DELAY1;
+                                    timerStart = 1'b0;
+                                  end
+                          3'b010: begin
+                                    timerStart = 1'b1;
+                                    if(!enableSample)
+                                      nextState = DELAY1;
+                                    else
+                                      nextState = SAMPLETIME;
+                                  end
+                          3'b011: begin
+                                    timerStart = 1'b0;
+                                    if(!raw)
+                                      nextState = BUTTONNOTPRESSED;
+                                    else
+                                      nextState = SAMPLETIME;
+                                  end
+                          3'b100: begin
+                                    timerStart = 1'b1;
+                                    if(!enableSample)
+                                      nextState = BUTTONNOTPRESSED;
+                                    else
+                                      nextState = IDLE;
+                                  end
+                          default:begin
+                                    nextState = IDLE; //Compensating for the other states
+                                    timerStart = 1'b0;
+                                  end
                         endcase
-                      //Output Logic
+
+
+                      countTimer delayCounter(.clk(clk5),.rst(reset),.enable(timerStart), .enableSample(enableSample));
+
+                      //Output Logic - > Only one output from our module but two from our state machine.
                       always @(currentState)
                         case(currentState)
                           3'b000: clean = 1'b0;
@@ -64,6 +84,7 @@ module buttonCleanup( input clk5,
                           3'b010: clean = 1'b0;
                           3'b011: clean = 1'b0;
                           3'b100: clean = 1'b0;
+                          default: clean = 1'b0;
                         endcase
 
 endmodule

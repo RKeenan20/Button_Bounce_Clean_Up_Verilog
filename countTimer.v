@@ -15,13 +15,13 @@ module countTimer(
         input clk,              // clock signal
         input rst,              // reset, synchronous, active high
         input enable,
-        output enableSample );  // count output
+        output reg enableSample );  // count output
 
     localparam comparator = 39999;
     reg [15:0] nextCount;      // next count value
     //  Count register
     always @ (posedge clk)
-        if (rst) count <= 16'd0;
+        if (rst) count <= 16'b0;
         else count <= nextCount;
 
     //Input Mux
@@ -31,9 +31,8 @@ module countTimer(
             1'b0: nextCount = 16'b0;
         endcase
 
-    if(count == comparator)
-        assign enableSample = 1'b1;
-    else
-        assign enableSample = 1'b0;
+    always @(count)
+        if(count == comparator) enableSample = 1'b1;
+        else enableSample = 1'b0;
 
 endmodule
