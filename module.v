@@ -16,8 +16,9 @@ module buttonCleanup( input clk5,
                       input raw,
                       output reg clean );
 
-                      reg [2:0] currentState, nextState;
-                      wire enableSample, timerStart;
+                      (* dont_touch = "true" *)reg [2:0] currentState, nextState;
+                      wire enableSample;
+                      reg timerStart;
 
                       localparam [2:0]  IDLE = 3'b000,
                                         BTNPRESSED = 3'b001,
