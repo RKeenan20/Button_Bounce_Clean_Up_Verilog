@@ -16,66 +16,67 @@ module buttonCleanup( input clk5,
                       input raw,
                       output reg clean );
 
-                      (* dont_touch = "true" *)reg [2:0] currentState, nextState;
-                      wire enableSample;
-                      reg timerStart;
+                      reg [2:0] currentState, nextState; //States
+                      wire delayPassed;                  //Output from the Counter/timer
+                      reg timerStart;                    //Input to the counter for MUX
 
+                      //Defining states as localparams
                       localparam [2:0]  IDLE = 3'b000,
                                         BTNPRESSED = 3'b001,
                                         DELAY1 = 3'b010,
-                                        SAMPLETIME = 3'b011,
+                                        BTNstillPRESSED = 3'b011,
                                         BUTTONNOTPRESSED = 3'b100;
 
-
-                      always @(posedge clk5, posedge reset)
+                      //State Register
+                      always @(posedge clk5)
                           if(reset)
                             currentState <= IDLE;
                           else
                             currentState <= nextState;
 
-                      //Next State Logic
-                      always @(currentState, raw, enableSample )
+                      //Next State Logic - Dependent on 2 inputs
+                      always @(currentState, raw, delayPassed )
                         case(currentState)
                           3'b000: begin
-                                    timerStart = 1'b0;
+                                    timerStart = 1'b0;    //Output to counter is zero
                                     if(raw)
-                                      nextState = BTNPRESSED;
+                                      nextState = BTNPRESSED;  //Button is now pressed
                                     else
-                                      nextState = IDLE;
+                                      nextState = IDLE;       //Loop in IDLE
                                   end
                           3'b001: begin
-                                    nextState = DELAY1;
-                                    timerStart = 1'b0;
+                                    nextState = DELAY1; //Pass straight through regardless of inputs
+                                    timerStart = 1'b0;  //Not starting counter
                                   end
                           3'b010: begin
-                                    timerStart = 1'b1;
-                                    if(!enableSample)
-                                      nextState = DELAY1;
+                                    timerStart = 1'b1;  //Start Counter
+                                    if(!delayPassed)
+                                      nextState = DELAY1; //Stay in state until 8ms has passed
                                     else
-                                      nextState = SAMPLETIME;
+                                      nextState = BTNstillPRESSED;
                                   end
                           3'b011: begin
                                     timerStart = 1'b0;
                                     if(!raw)
-                                      nextState = BUTTONNOTPRESSED;
+                                      nextState = BUTTONNOTPRESSED; //Do not transition until user stops pressing button
                                     else
-                                      nextState = SAMPLETIME;
+                                      nextState = BTNstillPRESSED;
                                   end
                           3'b100: begin
-                                    timerStart = 1'b1;
-                                    if(!enableSample)
+                                    timerStart = 1'b1; //Start counter again to compensate for bounce on release of button
+                                    if(!delayPassed)
                                       nextState = BUTTONNOTPRESSED;
                                     else
                                       nextState = IDLE;
                                   end
                           default:begin
-                                    nextState = IDLE; //Compensating for the other states
+                                    nextState = IDLE;    //Compensating for the other states
                                     timerStart = 1'b0;
                                   end
                         endcase
 
-
-                      countTimer delayCounter(.clk(clk5),.rst(reset),.enable(timerStart), .enableSample(enableSample));
+                      //Instantiation of counter to count to 8ms and output a 1
+                      countTimer delayCounter(.clk(clk5),.rst(reset),.timerStart(timerStart), .timerOut(delayPassed));
 
                       //Output Logic - > Only one output from our module but two from our state machine.
                       always @(currentState)

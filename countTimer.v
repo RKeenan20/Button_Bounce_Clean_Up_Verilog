@@ -1,38 +1,34 @@
 //////////////////////////////////////////////////////////////////////////////////
 // Company:     UCD School of Electrical and Electronic Engineering
-// Engineer:    Brian Mulkeen
+// Engineer:    Robert Keenan & Ciaran Nolan
 //
-// Module Name:    counterUpDown
-// Project Name:   Cleanup Hardware test system
-// Create Date:    17:27:47 09/28/2012
-// Revision 1:     20 October 2017, comments modified
-//
-// This is a 16-bit up-down counter with separate control signals for up and down.
-// For demonstration purposes, it has an edge detector on the down control.
-//
+// Module Name:    countTimer
+// Project Name:   Button Signal Cleanup
+
 //////////////////////////////////////////////////////////////////////////////////
 module countTimer(
         input clk,              // clock signal
         input rst,              // reset, synchronous, active high
-        input enable,
-        output reg enableSample );  // count output
+        input timerStart,           //Enable to start the counter
+        output reg timerOut );  //Output 1 when 8ms has passed, 0 otherwise
 
-    localparam comparator = 39999;
-    reg [15:0] nextCount;      // next count value
-    //  Count register
+    localparam comparator = 39999;  //Comparator Value to count to 8ms and then output
+    reg [15:0] nextCount;      //next count value
+
+    //  Count register - 16 bit
     always @ (posedge clk)
         if (rst) count <= 16'b0;
         else count <= nextCount;
 
-    //Input Mux
-    always @(enable, count)
-        case(enable)
+    //Input Mux - Dependent on the Start Value from the State Machine
+    always @(timerStart, count)
+        case(timerStart)
             1'b1: nextCount = count + 1'b1;
             1'b0: nextCount = 16'b0;
         endcase
-
+    //Comparator
     always @(count)
-        if(count == comparator) enableSample = 1'b1;
-        else enableSample = 1'b0;
+        if(count == comparator) timerOut = 1'b1;    //IF count==39999, output 1
+        else timerOut = 1'b0;
 
 endmodule
