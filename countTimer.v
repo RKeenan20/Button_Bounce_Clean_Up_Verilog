@@ -27,6 +27,6 @@ module countTimer(
             1'b0: nextCount = 16'b0;
         endcase
     //Comparator - IF count is equal to comparator value output 1, otherwise 0
-    assign timerOut = (count == comparator) ? 1'b1 : 1'b0;
+    assign timerOut = (count == comparator)
 
 endmodule
