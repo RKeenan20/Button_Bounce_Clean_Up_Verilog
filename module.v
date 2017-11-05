@@ -1,11 +1,9 @@
 //
 //Company:     UCD School of Electrical and Electronic Engineering
-// Engineer:    Brian Mulkeen
+// Engineer:    Robert Keenan & Ciaran Nolan
 //
-// Module Name:    counterUpDown
-// Project Name:   Cleanup Hardware test system
-// Create Date:    17:27:47 09/28/2012
-// Revision 1:     20 October 2017, comments modified
+// Module Name:    buttonCleanup
+// Project Name:   Button Input Signal Cleanup
 //
 // Our Button Clean up module so we can prevent/ignore bounce
 // We have instantiated a counter module for which we will use for delays to ignore possible bounce.
@@ -18,7 +16,7 @@ module buttonCleanup( input clk5,
 
                       reg [2:0] currentState, nextState; //States
                       wire delayPassed;                  //Output from the Counter/timer
-                      reg timerStart;                    //Input to the counter for MUX
+                      reg timerControl;                    //Input to the counter for MUX
 
                       //Defining states as localparams
                       localparam [2:0]  IDLE = 3'b000,
@@ -38,7 +36,7 @@ module buttonCleanup( input clk5,
                       always @(currentState, raw, delayPassed )
                         case(currentState)
                           3'b000: begin
-                                    timerStart = 1'b0;    //Output to counter is zero
+                                    timerControl = 1'b0;    //Output to counter is zero
                                     if(raw)
                                       nextState = BTNPRESSED;  //Button is now pressed
                                     else
@@ -46,24 +44,24 @@ module buttonCleanup( input clk5,
                                   end
                           3'b001: begin
                                     nextState = DELAY1; //Pass straight through regardless of inputs
-                                    timerStart = 1'b0;  //Not starting counter
+                                    timerControl = 1'b0;  //Not starting counter
                                   end
                           3'b010: begin
-                                    timerStart = 1'b1;  //Start Counter
+                                    timerControl = 1'b1;  //Start Counter
                                     if(!delayPassed)
                                       nextState = DELAY1; //Stay in state until 8ms has passed
                                     else
                                       nextState = BTNstillPRESSED;
                                   end
                           3'b011: begin
-                                    timerStart = 1'b0;
+                                    timerControl = 1'b0;
                                     if(!raw)
                                       nextState = BUTTONNOTPRESSED; //Do not transition until user stops pressing button
                                     else
                                       nextState = BTNstillPRESSED;
                                   end
                           3'b100: begin
-                                    timerStart = 1'b1; //Start counter again to compensate for bounce on release of button
+                                    timerControl = 1'b1; //Start counter again to compensate for bounce on release of button
                                     if(!delayPassed)
                                       nextState = BUTTONNOTPRESSED;
                                     else
@@ -71,12 +69,12 @@ module buttonCleanup( input clk5,
                                   end
                           default:begin
                                     nextState = IDLE;    //Compensating for the other states
-                                    timerStart = 1'b0;
+                                    timerControl = 1'b0;
                                   end
                         endcase
 
                       //Instantiation of counter to count to 8ms and output a 1
-                      countTimer delayCounter(.clk(clk5),.rst(reset),.timerStart(timerStart), .timerOut(delayPassed));
+                      countTimer delayCounter(.clk(clk5),.rst(reset),.timerControl(timerControl), .timerOut(delayPassed));
 
                       //Output Logic - > Only one output from our module but two from our state machine.
                       always @(currentState)
