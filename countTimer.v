@@ -20,13 +20,14 @@ module countTimer(
         if (rst) count <= 16'b0;
         else count <= nextCount;
 
-    //Input Mux - Dependent on the Start Value from the State Machine
+    //Input Mux - Dependent on the control Value from the State Machine
     always @(timerControl, count)
         case(timerControl)
             1'b1: nextCount = count + 1'b1;
             1'b0: nextCount = 16'b0;
         endcase
-    //Comparator - IF count is equal to comparator value output 1, otherwise 0
-    assign timerOut = (count == comparator)
+
+    //Comparator - IF count is equal to comparator value, assign timerOut = 1, otherwise 0
+    assign timerOut = (count == comparator);
 
 endmodule

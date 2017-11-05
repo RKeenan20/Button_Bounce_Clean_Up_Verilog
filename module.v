@@ -15,15 +15,15 @@ module buttonCleanup( input clk5,
                       output reg clean );
 
                       reg [2:0] currentState, nextState; //States
-                      wire delayPassed;                  //Output from the Counter/timer
-                      reg timerControl;                    //Input to the counter for MUX
+                      wire delayPassed;                  //Output from the Counter/timer..Input to SM
+                      reg timerControl;                  //Input to the counter for MUX..Output from SM
 
                       //Defining states as localparams
                       localparam [2:0]  IDLE = 3'b000,
                                         BTNPRESSED = 3'b001,
                                         DELAY1 = 3'b010,
                                         BTNstillPRESSED = 3'b011,
-                                        BUTTONNOTPRESSED = 3'b100;
+                                        BUTTONunPRESSED = 3'b100;
 
                       //State Register
                       always @(posedge clk5)
@@ -32,7 +32,7 @@ module buttonCleanup( input clk5,
                           else
                             currentState <= nextState;
 
-                      //Next State Logic - Dependent on 2 inputs
+                      //Next State Logic
                       always @(currentState, raw, delayPassed )
                         case(currentState)
                           3'b000: begin
@@ -56,14 +56,14 @@ module buttonCleanup( input clk5,
                           3'b011: begin
                                     timerControl = 1'b0;
                                     if(!raw)
-                                      nextState = BUTTONNOTPRESSED; //Do not transition until user stops pressing button
+                                      nextState = BUTTONunPRESSED; //Do not transition until user stops pressing button
                                     else
                                       nextState = BTNstillPRESSED;
                                   end
                           3'b100: begin
                                     timerControl = 1'b1; //Start counter again to compensate for bounce on release of button
                                     if(!delayPassed)
-                                      nextState = BUTTONNOTPRESSED;
+                                      nextState = BUTTONunPRESSED;
                                     else
                                       nextState = IDLE;
                                   end
